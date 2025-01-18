@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ModSecurity Rule Parser</title>
+    <title>SecLang for Human</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -11,9 +11,26 @@
             padding: 0;
             overflow: hidden;
         }
+        .header {
+            height: 50px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .header-subtitle {
+            font-size: 14px;
+            font-style: italic;
+            font-weight: normal;
+            margin-left: 10px;
+            opacity: 0.6;
+        }
         .split-view {
             display: flex;
-            height: calc(100vh - 40px);
+            height: calc(100vh - 90px); /* 50px header + 40px footer */
             position: relative;
         }
         .left-panel {
@@ -48,10 +65,6 @@
         .text-area:focus {
             border-color: #2196F3;
             box-shadow: 0 0 0 1px #2196F3;
-        }
-        .theme-dark .text-area:focus {
-            border-color: #1a73e8;
-            box-shadow: 0 0 0 1px #1a73e8;
         }
         .output-area {
             width: 100%;
@@ -136,6 +149,11 @@
         }
 
         /* Light Theme */
+        .theme-light .header {
+            background-color: #f3f4f6;
+            color: #000;
+            border-bottom: 1px solid #e5e7eb;
+        }
         .theme-light .left-panel { background-color: #f3f4f6; }
         .theme-light .right-panel { background-color: white; }
         .theme-light .text-area { 
@@ -149,18 +167,28 @@
         .theme-light .footer {
             background-color: #f3f4f6;
             color: #000;
+            border-top: 1px solid #e5e7eb;
         }
         .theme-light .divider {
             background-color: #ccc;
         }
 
         /* Dark Theme */
+        .theme-dark .header {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border-bottom: 1px solid #404040;
+        }
         .theme-dark .left-panel { background-color: #1e1e1e; }
         .theme-dark .right-panel { background-color: #1e1e1e; }
         .theme-dark .text-area { 
             background-color: #1e1e1e;
             color: #d4d4d4;
             border-color: #404040;
+        }
+        .theme-dark .text-area:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 1px #1a73e8;
         }
         .theme-dark .output-area { 
             background-color: #1e1e1e;
@@ -170,6 +198,7 @@
         .theme-dark .footer {
             background-color: #1e1e1e;
             color: #d4d4d4;
+            border-top: 1px solid #404040;
         }
         .theme-dark .divider {
             background-color: #404040;
@@ -284,6 +313,10 @@
 
             return (
                 <div className={isDarkMode ? 'theme-dark' : 'theme-light'}>
+                    <header className="header">
+                        <span>SecLang for Human</span>
+                        <span className="header-subtitle"># just a nice representation of sec rules</span>
+                    </header>
                     <div className="split-view" ref={containerRef} style={{cursor: isDragging ? 'col-resize' : 'default'}}>
                         <div className="left-panel" style={{width: `${splitPosition}%`}}>
                             <textarea
