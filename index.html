@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ModSecurity Rule Parser</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        .split-view {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+        }
+        .left-panel {
+            width: 50%;
+            padding: 20px;
+            background-color: #f3f4f6;
+        }
+        .right-panel {
+            width: 50%;
+            padding: 20px;
+            background-color: white;
+        }
+        .text-area {
+            width: 100%;
+            height: 90vh;
+            font-family: monospace;
+            padding: 10px;
+        }
+        .output-area {
+            width: 100%;
+            height: 90vh;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow: auto;
+        }
+        .comment { color: #6b7280; }
+        .directive { color: #dc2626; font-weight: bold; }
+        .variable { color: #2563eb; margin-left: 20px; }
+        .operator { color: #7c3aed; margin-left: 20px; }
+        .action { color: #059669; margin-left: 40px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        function App() {
+            const [input, setInput] = React.useState('');
+
+            const parseRule = (text) => {
+                return text.split('\n').map((line, index) => {
+                    if (!line.trim()) {
+                        return <div key={index}>&nbsp;</div>;
+                    }
+
+                    if (line.trim().startsWith('#')) {
+                        return <div key={index} className="comment">{line}</div>;
+                    }
+
+                    if (line.trim().startsWith('SecRule') || line.trim().startsWith('SecAction')) {
+                        try {
+                            const directive = line.match(/^(SecRule|SecAction)/)[0];
+                            const remainingLine = line.slice(directive.length).trim();
+                            const firstQuoteIndex = remainingLine.indexOf('"');
+
+                            if (firstQuoteIndex === -1) {
+                                return (
+                                    <div key={index}>
+                                        <span className="directive">{directive}</span>
+                                        <span>{remainingLine}</span>
+                                    </div>
+                                );
+                            }
+
+                            const variable = remainingLine.slice(0, firstQuoteIndex).trim();
+                            const restOfLine = remainingLine.slice(firstQuoteIndex);
+                            const matches = restOfLine.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g) || [];
+                            const [operator, actions] = matches;
+
+                            return (
+                                <div key={index}>
+                                    <span className="directive">{directive}</span>
+                                    {variable && <div className="variable">{variable}</div>}
+                                    {operator && <div className="operator">{operator}</div>}
+                                    {actions && (
+                                        <div>
+                                            {actions.slice(1, -1).split(/(?<=\)),|(?<![\w\d]"),/).map((action, actionIndex, arr) => (
+                                                <div key={actionIndex} className="action">
+                                                    {action.trim()}
+                                                    {actionIndex < arr.length - 1 && ','}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        } catch (error) {
+                            return <div key={index}>{line}</div>;
+                        }
+                    }
+
+                    return <div key={index}>{line}</div>;
+                });
+            };
+
+            return (
+                <div className="split-view">
+                    <div className="left-panel">
+                        <textarea
+                            className="text-area"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Enter ModSecurity rules here..."
+                        />
+                    </div>
+                    <div className="right-panel">
+                        <div className="output-area">
+                            {parseRule(input)}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
