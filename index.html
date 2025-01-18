@@ -156,11 +156,11 @@
         }
         .theme-light .left-panel { background-color: #f3f4f6; }
         .theme-light .right-panel { background-color: white; }
-        .theme-light .text-area { 
+        .theme-light .text-area {
             background-color: white;
             color: #000;
         }
-        .theme-light .output-area { 
+        .theme-light .output-area {
             background-color: white;
             color: #000;
         }
@@ -181,7 +181,7 @@
         }
         .theme-dark .left-panel { background-color: #1e1e1e; }
         .theme-dark .right-panel { background-color: #1e1e1e; }
-        .theme-dark .text-area { 
+        .theme-dark .text-area {
             background-color: #1e1e1e;
             color: #d4d4d4;
             border-color: #404040;
@@ -190,7 +190,7 @@
             border-color: #1a73e8;
             box-shadow: 0 0 0 1px #1a73e8;
         }
-        .theme-dark .output-area { 
+        .theme-dark .output-area {
             background-color: #1e1e1e;
             color: #d4d4d4;
             border-color: #404040;
@@ -315,7 +315,7 @@
                 <div className={isDarkMode ? 'theme-dark' : 'theme-light'}>
                     <header className="header">
                         <span>SecLang for Human</span>
-                        <span className="header-subtitle"># just a nice representation of sec rules</span>
+                        <span className="header-subtitle"># just a nice representation of owasp sec rules</span>
                     </header>
                     <div className="split-view" ref={containerRef} style={{cursor: isDragging ? 'col-resize' : 'default'}}>
                         <div className="left-panel" style={{width: `${splitPosition}%`}}>
@@ -326,8 +326,8 @@
                                 placeholder="Enter ModSecurity rules here..."
                             />
                         </div>
-                        <div 
-                            className="divider" 
+                        <div
+                            className="divider"
                             style={{left: `${splitPosition}%`}}
                             onMouseDown={startDragging}
                         />
@@ -341,8 +341,8 @@
                         <div className="theme-switch">
                             <span className="switch-label">Dark Mode</span>
                             <label className="switch">
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     checked={isDarkMode}
                                     onChange={(e) => setIsDarkMode(e.target.checked)}
                                 />
