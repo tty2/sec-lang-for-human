@@ -9,7 +9,7 @@ A lightweight web-based formatter for ModSecurity (OWASP) rules, making them eas
 - **Resizable Panels:** Adjust panel width to suit your preferences.
 
 ## How to Use
-1. Visit the live version: [SecLang for Human](https://yourusername.github.io/owasp-sec-rule-formatter).
+1. Visit the live version: [SecLang for Human](https://tty2.github.io/sec-lang-for-human/).
 2. Paste your ModSecurity rules into the left panel.
 3. View the formatted result in the right panel.
 
