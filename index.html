@@ -342,9 +342,10 @@
                                     <span className="directive">{directive}</span>
                                     {tokens.map((token, tokenIndex) => (
                                         <div key={tokenIndex} className={token.type}>
-                                            {token.type !== 'variable' && '"'}
+                                            {(token.type === 'operator') && '"'}
                                             {token.content}
-                                            {token.type !== 'variable' && '"'}
+                                            {(token.type === 'operator') && '"'}
+                                            {token.type === 'action' && tokenIndex < tokens.length - 1 && ','}
                                         </div>
                                     ))}
                                 </div>
