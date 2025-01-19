@@ -207,25 +207,37 @@
         .theme-dark .directive { color: #FF8C8C; font-weight: bold; }
         .theme-dark .variable { color: #4FC1FF; margin-left: 20px; }
         .theme-dark .operator { color: #C586C0; margin-left: 20px; }
-        .theme-dark .action { color: #4EC9B0; margin-left: 40px; }
+        .theme-dark .action { color: #4EC9B0; margin-left: 40px; display: block; }
 
-        /* Light Theme Colors */
         .theme-light .comment { color: #6b7280; }
         .theme-light .directive { color: #dc2626; font-weight: bold; }
         .theme-light .variable { color: #2563eb; margin-left: 20px; }
         .theme-light .operator { color: #7c3aed; margin-left: 20px; }
-        .theme-light .action { color: #059669; margin-left: 40px; }
+        .theme-light .action { color: #059669; margin-left: 40px; display: block; }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel">
         function App() {
+            // Initialize theme from localStorage or system preference
+            const [isDarkMode, setIsDarkMode] = React.useState(() => {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme !== null) {
+                    return JSON.parse(savedTheme);
+                }
+                // If no saved preference, use system preference
+                return window.matchMedia('(prefers-color-scheme: dark)').matches;
+            });
             const [input, setInput] = React.useState('');
             const [splitPosition, setSplitPosition] = React.useState(50);
             const [isDragging, setIsDragging] = React.useState(false);
-            const [isDarkMode, setIsDarkMode] = React.useState(false);
             const containerRef = React.useRef(null);
+
+            // Save theme preference when it changes
+            React.useEffect(() => {
+                localStorage.setItem('theme', JSON.stringify(isDarkMode));
+            }, [isDarkMode]);
 
             const startDragging = (e) => {
                 setIsDragging(true);
@@ -316,7 +328,6 @@
                                     }
                                     inQuotes = !inQuotes;
                                     if (!inQuotes && currentToken) {
-                                        // Check if this is an action (contains : without starting with @)
                                         if (currentToken.includes(':') && !currentToken.startsWith('@')) {
                                             const actions = splitActions(currentToken);
                                             actions.forEach(action => {
