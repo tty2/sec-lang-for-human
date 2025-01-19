@@ -30,7 +30,7 @@
         }
         .split-view {
             display: flex;
-            height: calc(100vh - 90px); /* 50px header + 40px footer */
+            height: calc(100vh - 90px);
             position: relative;
         }
         .left-panel {
@@ -255,8 +255,35 @@
                 }
             }, [isDragging]);
 
+            const preprocessLines = (text) => {
+                const lines = text.split('\n');
+                const processedLines = [];
+                let currentLine = '';
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line.endsWith('\\')) {
+                        currentLine += line.slice(0, -1) + ' ';
+                    } else {
+                        currentLine += line;
+                        if (currentLine) {
+                            processedLines.push(currentLine);
+                        }
+                        currentLine = '';
+                    }
+                }
+                
+                if (currentLine) {
+                    processedLines.push(currentLine);
+                }
+
+                return processedLines;
+            };
+
             const parseRule = (text) => {
-                return text.split('\n').map((line, index) => {
+                const processedLines = preprocessLines(text);
+                
+                return processedLines.map((line, index) => {
                     if (!line.trim()) {
                         return <div key={index}>&nbsp;</div>;
                     }
@@ -265,43 +292,64 @@
                         return <div key={index} className="comment">{line}</div>;
                     }
 
-                    if (line.trim().startsWith('SecRule') || line.trim().startsWith('SecAction')) {
+                    if (line.trim().startsWith('Sec')) {
                         try {
-                            const directive = line.match(/^(SecRule|SecAction)/)[0];
-                            const remainingLine = line.slice(directive.length).trim();
-                            const firstQuoteIndex = remainingLine.indexOf('"');
-
-                            if (firstQuoteIndex === -1) {
-                                return (
-                                    <div key={index}>
-                                        <span className="directive">{directive}</span>
-                                        <span>{remainingLine}</span>
-                                    </div>
-                                );
+                            const directive = line.match(/^(Sec[A-Za-z]+)/)[0];
+                            let remainingLine = line.slice(directive.length).trim();
+                            
+                            const tokens = [];
+                            let currentToken = '';
+                            let inQuotes = false;
+                            
+                            for (let i = 0; i < remainingLine.length; i++) {
+                                const char = remainingLine[i];
+                                
+                                if (char === '"' && (i === 0 || remainingLine[i-1] !== '\\')) {
+                                    if (currentToken && !inQuotes) {
+                                        tokens.push({ type: 'variable', content: currentToken.trim() });
+                                        currentToken = '';
+                                    }
+                                    inQuotes = !inQuotes;
+                                    if (!inQuotes && currentToken) {
+                                        // Check if the quoted content starts with @
+                                        if (currentToken.trim().startsWith('@')) {
+                                            tokens.push({ type: 'operator', content: currentToken });
+                                        } else {
+                                            // Parse the quoted content for actions if it contains commas
+                                            if (currentToken.includes(',')) {
+                                                const actions = currentToken.split(/(?<=\)),|(?<![\w\d]"),/).map(action => ({
+                                                    type: 'action',
+                                                    content: action.trim()
+                                                }));
+                                                tokens.push(...actions);
+                                            } else {
+                                                tokens.push({ type: 'operator', content: currentToken });
+                                            }
+                                        }
+                                        currentToken = '';
+                                    }
+                                } else {
+                                    currentToken += char;
+                                }
                             }
-
-                            const variable = remainingLine.slice(0, firstQuoteIndex).trim();
-                            const restOfLine = remainingLine.slice(firstQuoteIndex);
-                            const matches = restOfLine.match(/"([^"\\]*(?:\\.[^"\\]*)*)"/g) || [];
-                            const [operator, actions] = matches;
+                            
+                            if (currentToken.trim()) {
+                                tokens.push({ type: 'variable', content: currentToken.trim() });
+                            }
 
                             return (
                                 <div key={index}>
                                     <span className="directive">{directive}</span>
-                                    {variable && <div className="variable">{variable}</div>}
-                                    {operator && <div className="operator">{operator}</div>}
-                                    {actions && (
-                                        <div>
-                                            {actions.slice(1, -1).split(/(?<=\)),|(?<![\w\d]"),/).map((action, actionIndex, arr) => (
-                                                <div key={actionIndex} className="action">
-                                                    {action.trim()}
-                                                    {actionIndex < arr.length - 1 && ','}
-                                                </div>
-                                            ))}
+                                    {tokens.map((token, tokenIndex) => (
+                                        <div key={tokenIndex} className={token.type}>
+                                            {token.type !== 'variable' && '"'}
+                                            {token.content}
+                                            {token.type !== 'variable' && '"'}
                                         </div>
-                                    )}
+                                    ))}
                                 </div>
                             );
+
                         } catch (error) {
                             return <div key={index}>{line}</div>;
                         }
