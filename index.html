@@ -272,7 +272,7 @@
                         currentLine = '';
                     }
                 }
-                
+
                 if (currentLine) {
                     processedLines.push(currentLine);
                 }
@@ -280,30 +280,35 @@
                 return processedLines;
             };
 
+            const splitActions = (content) => {
+                if (content.includes(',') && content.includes(':') && !content.startsWith('@')) {
+                    return content.split(',').map(action => action.trim());
+                }
+                return [content];
+            };
+
             const parseRule = (text) => {
                 const processedLines = preprocessLines(text);
-                
-                return processedLines.map((line, index) => {
-                    if (!line.trim()) {
-                        return <div key={index}>&nbsp;</div>;
-                    }
 
-                    if (line.trim().startsWith('#')) {
+                return processedLines.map((line, index) => {
+                    if (!line) return <div key={index}>&nbsp;</div>;
+
+                    if (line.startsWith('#')) {
                         return <div key={index} className="comment">{line}</div>;
                     }
 
-                    if (line.trim().startsWith('Sec')) {
+                    if (line.startsWith('Sec')) {
                         try {
                             const directive = line.match(/^(Sec[A-Za-z]+)/)[0];
                             let remainingLine = line.slice(directive.length).trim();
-                            
+
                             const tokens = [];
                             let currentToken = '';
                             let inQuotes = false;
-                            
+
                             for (let i = 0; i < remainingLine.length; i++) {
                                 const char = remainingLine[i];
-                                
+
                                 if (char === '"' && (i === 0 || remainingLine[i-1] !== '\\')) {
                                     if (currentToken && !inQuotes) {
                                         tokens.push({ type: 'variable', content: currentToken.trim() });
@@ -311,20 +316,14 @@
                                     }
                                     inQuotes = !inQuotes;
                                     if (!inQuotes && currentToken) {
-                                        // Check if the quoted content starts with @
-                                        if (currentToken.trim().startsWith('@')) {
-                                            tokens.push({ type: 'operator', content: currentToken });
+                                        // Check if this is an action (contains : without starting with @)
+                                        if (currentToken.includes(':') && !currentToken.startsWith('@')) {
+                                            const actions = splitActions(currentToken);
+                                            actions.forEach(action => {
+                                                tokens.push({ type: 'action', content: action });
+                                            });
                                         } else {
-                                            // Parse the quoted content for actions if it contains commas
-                                            if (currentToken.includes(',')) {
-                                                const actions = currentToken.split(/(?<=\)),|(?<![\w\d]"),/).map(action => ({
-                                                    type: 'action',
-                                                    content: action.trim()
-                                                }));
-                                                tokens.push(...actions);
-                                            } else {
-                                                tokens.push({ type: 'operator', content: currentToken });
-                                            }
+                                            tokens.push({ type: 'operator', content: currentToken });
                                         }
                                         currentToken = '';
                                     }
@@ -332,7 +331,7 @@
                                     currentToken += char;
                                 }
                             }
-                            
+
                             if (currentToken.trim()) {
                                 tokens.push({ type: 'variable', content: currentToken.trim() });
                             }
@@ -341,21 +340,21 @@
                                 <div key={index}>
                                     <span className="directive">{directive}</span>
                                     {tokens.map((token, tokenIndex) => (
-                                        <div key={tokenIndex} className={token.type}>
-                                            {(token.type === 'operator') && '"'}
+                                        <div
+                                            key={tokenIndex}
+                                            className={token.type === 'action' ? 'action action-token' : token.type}
+                                        >
+                                            {token.type !== 'action' && token.type !== 'variable' && '"'}
                                             {token.content}
-                                            {(token.type === 'operator') && '"'}
-                                            {token.type === 'action' && tokenIndex < tokens.length - 1 && ','}
+                                            {token.type !== 'action' && token.type !== 'variable' && '"'}
                                         </div>
                                     ))}
                                 </div>
                             );
-
                         } catch (error) {
                             return <div key={index}>{line}</div>;
                         }
                     }
-
                     return <div key={index}>{line}</div>;
                 });
             };
@@ -366,7 +365,7 @@
                         <span>SecLang for Human</span>
                         <span className="header-subtitle"># just a nice representation of owasp sec rules</span>
                     </header>
-                    <div className="split-view" ref={containerRef} style={{cursor: isDragging ? 'col-resize' : 'default'}}>
+                    <div className="split-view" ref={containerRef}>
                         <div className="left-panel" style={{width: `${splitPosition}%`}}>
                             <textarea
                                 className="text-area"
